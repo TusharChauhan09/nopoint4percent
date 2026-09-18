@@ -11,23 +11,25 @@ function isMobileUpiDevice() {
   return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 }
 
-type PayTileProps = {
+type PayCouponProps = {
   upiId: string;
   name?: string;
   amount: number;
   index: number;
+  totalParts: number;
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
 };
 
-export function PayTile({
+export function PayCoupon({
   upiId,
   name,
   amount,
   index,
+  totalParts,
   checked,
   onCheckedChange,
-}: PayTileProps) {
+}: PayCouponProps) {
   const [copied, setCopied] = useState(false);
   const uri = useMemo(
     () => buildUpiUri({ upiId, name, amount }),
@@ -48,46 +50,51 @@ export function PayTile({
   return (
     <article
       className={cn(
-        "flex flex-col items-center gap-3 rounded-[1.35rem] border border-coral/90 p-4 transition-[opacity,border-color]",
-        checked && "border-coral/40 opacity-45",
+        "pay-coupon flex flex-col gap-4 py-5 pr-5 pl-7 sm:flex-row sm:items-center sm:gap-8",
+        checked && "opacity-45",
       )}
     >
-      <p className="tabular-nums text-xl text-paper">
-        ₹{formatDisplayAmount(amount)}
+      <p className="w-10 shrink-0 text-sm tabular-nums text-muted-foreground">
+        {index + 1}/{totalParts}
       </p>
-      <div className="rounded-2xl bg-paper p-3">
+      <div className="shrink-0 bg-slip p-2">
         <QRCodeSVG
           value={uri}
-          size={148}
-          bgColor="#F4EDE4"
-          fgColor="#0C0B0A"
+          size={112}
+          bgColor="#FBFCFE"
+          fgColor="#18202C"
           level="M"
-          marginSize={2}
+          marginSize={1}
           title={`UPI QR ${index + 1} for ₹${formatDisplayAmount(amount)}`}
         />
       </div>
-      {mobile ? (
-        <a
-          href={uri}
-          className="text-sm text-coral underline-offset-4 hover:underline"
-        >
-          Pay in UPI
-        </a>
-      ) : (
-        <button
-          type="button"
-          onClick={copyLink}
-          className="text-sm text-coral underline-offset-4 hover:underline"
-        >
-          {copied ? "Copied" : "Copy UPI link"}
-        </button>
-      )}
-      <label className="flex cursor-pointer items-center gap-2 text-sm text-dust">
+      <div className="min-w-0 flex-1">
+        <p className="text-3xl font-extrabold tabular-nums sm:text-4xl">
+          ₹{formatDisplayAmount(amount)}
+        </p>
+        {mobile ? (
+          <a
+            href={uri}
+            className="mt-2 inline-block text-rupee underline-offset-4 hover:underline"
+          >
+            Open UPI
+          </a>
+        ) : (
+          <button
+            type="button"
+            onClick={copyLink}
+            className="mt-2 text-rupee underline-offset-4 hover:underline"
+          >
+            {copied ? "Copied" : "Copy pay link"}
+          </button>
+        )}
+      </div>
+      <label className="flex cursor-pointer items-center gap-2 text-sm">
         <Checkbox
           checked={checked}
           onCheckedChange={(value) => onCheckedChange(value === true)}
         />
-        I paid this one
+        Paid
       </label>
     </article>
   );

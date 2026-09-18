@@ -1,14 +1,9 @@
 import type { Metadata } from "next";
-import { Fraunces, Outfit } from "next/font/google";
+import { Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
 
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
-  subsets: ["latin"],
-});
-
-const outfit = Outfit({
-  variable: "--font-outfit",
+const bricolage = Bricolage_Grotesque({
+  variable: "--font-bricolage",
   subsets: ["latin"],
 });
 
@@ -19,11 +14,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="en"
-      className={`${fraunces.variable} ${outfit.variable} dark h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col bg-ink text-paper font-sans">
+    <html lang="en" className={`${bricolage.variable} h-full antialiased`}>
+      <body className="flex min-h-full flex-col bg-fog text-ink font-sans">
         {children}
       </body>
     </html>

@@ -7,13 +7,13 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-outfit);
-  --font-mono: var(--font-outfit);
-  --font-heading: var(--font-fraunces);
+  --font-sans: var(--font-bricolage);
+  --font-heading: var(--font-bricolage);
+  --color-fog: var(--fog);
   --color-ink: var(--ink);
-  --color-paper: var(--paper);
-  --color-coral: var(--coral);
-  --color-dust: var(--dust);
+  --color-rupee: var(--rupee);
+  --color-paid: var(--paid);
+  --color-slip: var(--slip);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -43,87 +43,80 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-sm: 0.15rem;
+  --radius-md: 0.2rem;
+  --radius-lg: 0.25rem;
+  --radius-xl: 0.35rem;
+  --radius-2xl: 0.5rem;
+  --radius-3xl: 0.75rem;
+  --radius-4xl: 1rem;
 }
 
 :root {
-  --ink: #0c0b0a;
-  --paper: #f4ede4;
-  --coral: #e38b7b;
-  --dust: #8a8178;
-  --background: #0c0b0a;
-  --foreground: #f4ede4;
-  --card: #0c0b0a;
-  --card-foreground: #f4ede4;
-  --popover: #141210;
-  --popover-foreground: #f4ede4;
-  --primary: #e38b7b;
-  --primary-foreground: #0c0b0a;
-  --secondary: #1a1714;
-  --secondary-foreground: #f4ede4;
-  --muted: #1a1714;
-  --muted-foreground: #8a8178;
-  --accent: #1f1a18;
-  --accent-foreground: #f4ede4;
-  --destructive: #e07070;
-  --border: #e38b7b;
-  --input: #e38b7b55;
-  --ring: #e38b7b;
-  --chart-1: #e38b7b;
-  --chart-2: #f4ede4;
-  --chart-3: #8a8178;
-  --chart-4: #c46d5e;
-  --chart-5: #3a322e;
-  --radius: 1.35rem;
-  --sidebar: #141210;
-  --sidebar-foreground: #f4ede4;
-  --sidebar-primary: #e38b7b;
-  --sidebar-primary-foreground: #0c0b0a;
-  --sidebar-accent: #1a1714;
-  --sidebar-accent-foreground: #f4ede4;
-  --sidebar-border: #e38b7b55;
-  --sidebar-ring: #e38b7b;
-}
-
-.dark {
-  --background: #0c0b0a;
-  --foreground: #f4ede4;
-  --card: #0c0b0a;
-  --card-foreground: #f4ede4;
-  --popover: #141210;
-  --popover-foreground: #f4ede4;
-  --primary: #e38b7b;
-  --primary-foreground: #0c0b0a;
-  --secondary: #1a1714;
-  --secondary-foreground: #f4ede4;
-  --muted: #1a1714;
-  --muted-foreground: #8a8178;
-  --accent: #1f1a18;
-  --accent-foreground: #f4ede4;
-  --destructive: #e07070;
-  --border: #e38b7b;
-  --input: #e38b7b55;
-  --ring: #e38b7b;
+  --fog: #e4eaf1;
+  --ink: #18202c;
+  --rupee: #2c5aa0;
+  --paid: #2a9d6e;
+  --slip: #fbfcfe;
+  --background: #e4eaf1;
+  --foreground: #18202c;
+  --card: #fbfcfe;
+  --card-foreground: #18202c;
+  --popover: #fbfcfe;
+  --popover-foreground: #18202c;
+  --primary: #2c5aa0;
+  --primary-foreground: #fbfcfe;
+  --secondary: #d5dee8;
+  --secondary-foreground: #18202c;
+  --muted: #d5dee8;
+  --muted-foreground: #5c6a7a;
+  --accent: #d5dee8;
+  --accent-foreground: #18202c;
+  --destructive: #c23b3b;
+  --border: #18202c22;
+  --input: #18202c33;
+  --ring: #2c5aa0;
+  --chart-1: #2c5aa0;
+  --chart-2: #2a9d6e;
+  --chart-3: #18202c;
+  --chart-4: #8aa0b8;
+  --chart-5: #d5dee8;
+  --radius: 0.2rem;
+  --sidebar: #fbfcfe;
+  --sidebar-foreground: #18202c;
+  --sidebar-primary: #2c5aa0;
+  --sidebar-primary-foreground: #fbfcfe;
+  --sidebar-accent: #d5dee8;
+  --sidebar-accent-foreground: #18202c;
+  --sidebar-border: #18202c22;
+  --sidebar-ring: #2c5aa0;
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground antialiased;
-  }
   html {
     @apply font-sans;
   }
+  body {
+    @apply bg-fog text-ink antialiased;
+  }
 }
 
-@utility font-display {
-  font-family: var(--font-fraunces), ui-serif, serif;
+.pay-coupon {
+  background-color: var(--slip);
+  background-image: radial-gradient(
+    circle at 0 11px,
+    var(--fog) 7px,
+    transparent 7.5px
+  );
+  background-size: 14px 22px;
+  background-repeat: repeat-y;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .paid-track-fill {
+    transition: none;
+  }
 }
