@@ -6,6 +6,7 @@ import { formatDisplayAmount } from "@/lib/split";
 
 type SiteHeaderProps = {
   saved: number;
+  onHome?: () => void;
   onPast?: () => void;
   onNew?: () => void;
   showPast?: boolean;
@@ -14,6 +15,7 @@ type SiteHeaderProps = {
 
 export function SiteHeader({
   saved,
+  onHome,
   onPast,
   onNew,
   showPast,
@@ -22,9 +24,13 @@ export function SiteHeader({
   return (
     <header className="mb-12 flex items-start justify-between gap-4">
       <div>
-        <p className="text-[1.35rem] font-extrabold tracking-tight">
+        <button
+          type="button"
+          onClick={onHome}
+          className="text-left text-[1.35rem] font-extrabold tracking-tight underline-offset-4 hover:underline"
+        >
           nopoint4percent
-        </p>
+        </button>
         <p className="mt-1 text-sm tabular-nums text-paid">
           ₹{formatDisplayAmount(saved)} saved
         </p>

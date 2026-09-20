@@ -25,6 +25,7 @@ export function App() {
   const [splits, setSplits] = useState<SplitRecord[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [nickname, setNickname] = useState("");
+  const [createKey, setCreateKey] = useState(0);
 
   useEffect(() => {
     const stored = loadSplits();
@@ -52,6 +53,16 @@ export function App() {
     setView("tiles");
   }
 
+  function goHome() {
+    setActiveId(null);
+    if (splits.length) {
+      setView("history");
+    } else {
+      setCreateKey((key) => key + 1);
+      setView("create");
+    }
+  }
+
   function togglePaid(index: number, checked: boolean) {
     if (!active) return;
     const next: SplitRecord = {
@@ -69,13 +80,18 @@ export function App() {
         saved={saved}
         showPast={view !== "history" && splits.length > 0}
         showNew={view !== "create"}
+        onHome={goHome}
         onPast={() => setView("history")}
         onNew={() => setView("create")}
       />
       {!ready ? (
         <p className="text-muted-foreground">Loading</p>
       ) : view === "create" ? (
-        <CreateView defaultName={nickname} onCreate={handleCreate} />
+        <CreateView
+          key={createKey}
+          defaultName={nickname}
+          onCreate={handleCreate}
+        />
       ) : view === "history" ? (
         <HistoryView
           items={splits}
