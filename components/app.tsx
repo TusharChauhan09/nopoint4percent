@@ -76,6 +76,7 @@ export function App() {
       ) : view === "history" ? (
         <HistoryView
           items={splits}
+          onNew={() => setView("create")}
           onOpen={(id) => {
             setActiveId(id);
             setView("tiles");

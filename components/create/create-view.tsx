@@ -2,33 +2,90 @@
 
 import { useState } from "react";
 import { AmountFields } from "@/components/create/amount-fields";
+import { PayeeConfirm } from "@/components/create/payee-confirm";
+import { QrScanner } from "@/components/create/qr-scanner";
 import { UpiFields } from "@/components/create/upi-fields";
 import { isValidUpiId, parseAmount } from "@/lib/split";
+import { parseUpiQr } from "@/lib/upi-qr";
 
 type CreateViewProps = {
   defaultName?: string;
   onCreate: (input: { upiId: string; name?: string; total: number }) => void;
 };
 
+type Step = "payee" | "scan" | "confirm" | "amount";
+
+function DummyQrMark({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 21 21"
+      fill="currentColor"
+      aria-hidden
+      className={className}
+    >
+      <rect x="1" y="1" width="7" height="7" />
+      <rect x="2.4" y="2.4" width="4.2" height="4.2" className="fill-ink" />
+      <rect x="3.5" y="3.5" width="2" height="2" />
+      <rect x="13" y="1" width="7" height="7" />
+      <rect x="14.4" y="2.4" width="4.2" height="4.2" className="fill-ink" />
+      <rect x="15.5" y="3.5" width="2" height="2" />
+      <rect x="1" y="13" width="7" height="7" />
+      <rect x="2.4" y="14.4" width="4.2" height="4.2" className="fill-ink" />
+      <rect x="3.5" y="15.5" width="2" height="2" />
+      <rect x="10" y="1" width="1.6" height="1.6" />
+      <rect x="10" y="4.4" width="1.6" height="1.6" />
+      <rect x="10" y="7.8" width="1.6" height="3.2" />
+      <rect x="1" y="10" width="3.2" height="1.6" />
+      <rect x="5.8" y="10" width="1.6" height="1.6" />
+      <rect x="9.2" y="10" width="4.8" height="1.6" />
+      <rect x="15.8" y="10" width="1.6" height="1.6" />
+      <rect x="18.6" y="10" width="1.4" height="3.2" />
+      <rect x="10" y="13" width="1.6" height="1.6" />
+      <rect x="13.4" y="13" width="3.2" height="1.6" />
+      <rect x="18.6" y="14.6" width="1.4" height="1.6" />
+      <rect x="10" y="16.2" width="3.2" height="1.6" />
+      <rect x="14.8" y="16.2" width="1.6" height="1.6" />
+      <rect x="18.6" y="17.8" width="1.4" height="2.2" />
+      <rect x="10" y="19.4" width="1.6" height="1.6" />
+      <rect x="13.4" y="19.4" width="3.2" height="1.6" />
+    </svg>
+  );
+}
+
 export function CreateView({ defaultName = "", onCreate }: CreateViewProps) {
+  const [step, setStep] = useState<Step>("payee");
   const [upiId, setUpiId] = useState("");
   const [name, setName] = useState(defaultName);
-  const [upiReady, setUpiReady] = useState(false);
   const [amount, setAmount] = useState("");
   const [error, setError] = useState("");
+
+  function applyPayee(nextUpi: string, nextName?: string) {
+    setUpiId(nextUpi);
+    if (nextName) setName(nextName);
+    setError("");
+    setStep("confirm");
+  }
 
   function continueUpi() {
     if (!isValidUpiId(upiId)) {
       setError("Use a UPI ID like name@okaxis");
       return;
     }
-    setError("");
-    setUpiReady(true);
+    applyPayee(upiId.trim());
+  }
+
+  function handleScan(payload: string) {
+    const parsed = parseUpiQr(payload);
+    if (!parsed) return false;
+    if (parsed.amount != null) setAmount(String(parsed.amount));
+    applyPayee(parsed.upiId, parsed.name);
+    return true;
   }
 
   function split() {
     if (!isValidUpiId(upiId)) {
       setError("Use a UPI ID like name@okaxis");
+      setStep("payee");
       return;
     }
     const parsed = parseAmount(amount);
@@ -48,48 +105,95 @@ export function CreateView({ defaultName = "", onCreate }: CreateViewProps) {
     <section className="flex flex-1 flex-col pb-10">
       <div className="flex flex-1 flex-col justify-center">
         <h1 className="mb-3 max-w-lg text-[clamp(2.4rem,7vw,4.4rem)] leading-[0.95] font-extrabold tracking-tight">
-          Send it in pieces under ₹1,900
+          Scan, confirm, then split under ₹1,900
         </h1>
         <p className="mb-12 max-w-md text-lg leading-relaxed text-muted-foreground">
-          Each scan opens UPI with the amount already filled. Mark a piece when
-          you have paid it.
+          Point at their UPI QR, check the name, enter the amount, and pay from
+          the small slips.
         </p>
-        {!upiReady ? (
-          <UpiFields
+        {step === "scan" ? (
+          <QrScanner onDetect={handleScan} onClose={() => setStep("payee")} />
+        ) : null}
+        {step === "payee" ? (
+          <div className="flex max-w-xl flex-col gap-10">
+            <button
+              type="button"
+              onClick={() => {
+                setError("");
+                setStep("scan");
+              }}
+              className="flex min-h-28 items-center justify-between gap-4 bg-ink px-6 py-5 text-left text-slip"
+            >
+              <span>
+                <span className="block text-xl font-extrabold tracking-tight">
+                  Scan UPI QR
+                </span>
+                <span className="mt-1 block text-sm text-slip/70">
+                  Camera or a photo of their code
+                </span>
+              </span>
+              <span className="grid size-12 place-items-center border border-slip/40 p-1.5">
+                <DummyQrMark className="size-full text-slip" />
+              </span>
+            </button>
+            <div className="flex flex-col gap-6">
+              <p className="text-sm text-muted-foreground">Or type the UPI ID</p>
+              <UpiFields
+                upiId={upiId}
+                name={name}
+                error={error}
+                onUpiIdChange={(value) => {
+                  setUpiId(value);
+                }}
+                onNameChange={setName}
+                onContinue={continueUpi}
+              />
+            </div>
+          </div>
+        ) : null}
+        {step === "confirm" ? (
+          <PayeeConfirm
             upiId={upiId}
             name={name}
-            error={error}
-            onUpiIdChange={(value) => {
-              setUpiId(value);
-              setUpiReady(false);
-            }}
             onNameChange={setName}
-            onContinue={continueUpi}
+            onConfirm={() => {
+              setError("");
+              setStep("amount");
+            }}
+            onChangePayee={() => setStep("payee")}
           />
-        ) : (
-          <AmountFields
-            amount={amount}
-            error={error}
-            onAmountChange={setAmount}
-            onSplit={split}
-          />
-        )}
+        ) : null}
+        {step === "amount" ? (
+          <div className="flex max-w-xl flex-col gap-8">
+            <p className="text-muted-foreground">
+              Amount for {name.trim() || upiId}
+            </p>
+            <AmountFields
+              amount={amount}
+              error={error}
+              onAmountChange={setAmount}
+              onSplit={split}
+            />
+          </div>
+        ) : null}
       </div>
       <ol className="mt-16 grid gap-6 text-sm text-muted-foreground sm:grid-cols-3">
         <li>
-          <p className="font-medium text-ink">UPI ID</p>
-          <p className="mt-1 leading-relaxed">Who should receive the money.</p>
-        </li>
-        <li>
-          <p className="font-medium text-ink">Amount</p>
+          <p className="font-medium text-ink">Scan</p>
           <p className="mt-1 leading-relaxed">
-            We break it into ₹1,900 scans plus leftover.
+            Their UPI QR, or type the ID if you already have it.
           </p>
         </li>
         <li>
-          <p className="font-medium text-ink">Pay</p>
+          <p className="font-medium text-ink">Confirm</p>
           <p className="mt-1 leading-relaxed">
-            Scan or open UPI. Tick Paid after each piece.
+            Check the name and UPI before you enter rupees.
+          </p>
+        </li>
+        <li>
+          <p className="font-medium text-ink">Slips</p>
+          <p className="mt-1 leading-relaxed">
+            We cut the total into ₹1,900 scans plus leftover.
           </p>
         </li>
       </ol>

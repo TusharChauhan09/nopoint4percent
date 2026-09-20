@@ -1,4 +1,7 @@
+"use client";
+
 import { GithubStar } from "@/components/layout/github-star";
+import { Button } from "@/components/ui/button";
 
 type SiteHeaderProps = {
   onPast?: () => void;
@@ -18,7 +21,7 @@ export function SiteHeader({
       <p className="text-[1.35rem] font-extrabold tracking-tight">
         nopoint4percent
       </p>
-      <nav className="flex items-center gap-4 text-[0.95rem] sm:gap-5">
+      <nav className="flex items-center gap-3 text-[0.95rem] sm:gap-4">
         {showPast ? (
           <button
             type="button"
@@ -29,13 +32,13 @@ export function SiteHeader({
           </button>
         ) : null}
         {showNew ? (
-          <button
+          <Button
             type="button"
             onClick={onNew}
-            className="text-rupee underline-offset-4 hover:underline"
+            className="h-10 rounded-sm px-4 text-sm"
           >
             New split
-          </button>
+          </Button>
         ) : null}
         <GithubStar />
       </nav>

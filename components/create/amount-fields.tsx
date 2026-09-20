@@ -47,7 +47,7 @@ export function AmountFields({
           disabled={parsed == null}
           className="h-12 rounded-sm px-6 text-base"
         >
-          Split this amount
+          Make payment slips
         </Button>
       </div>
     </form>

@@ -4,7 +4,7 @@ import { GITHUB_URL } from "@/lib/github";
 export function SiteFooter() {
   return (
     <footer className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-ink/10 pt-8 pb-2 text-sm text-muted-foreground">
-      <p>Each QR is ₹1,900 or the leftover. Mark paid as you scan.</p>
+      <p>Scan their UPI, confirm, then pay each slip. Mark paid as you go.</p>
       <a
         href={GITHUB_URL}
         target="_blank"
