@@ -12,24 +12,18 @@ export const metadata: Metadata = {
   description:
     "Scan a UPI QR, confirm the payee, then split the amount into scan-ready payment slips under ₹1,900.",
   applicationName: "nopoint4percent",
-  icons: {
-    icon: "/logo.png",
-    apple: "/logo.png",
-  },
   openGraph: {
     title: "nopoint4percent — Split UPI into ₹1,900 QR slips",
     description:
       "Scan a UPI QR, confirm the payee, then split the amount into scan-ready payment slips under ₹1,900.",
     siteName: "nopoint4percent",
     type: "website",
-    images: ["/logo.png"],
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: "nopoint4percent — Split UPI into ₹1,900 QR slips",
     description:
       "Scan a UPI QR, confirm the payee, then split the amount into scan-ready payment slips under ₹1,900.",
-    images: ["/logo.png"],
   },
 };
 
