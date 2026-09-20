@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { AmountFields } from "@/components/create/amount-fields";
 import { PayeeConfirm } from "@/components/create/payee-confirm";
 import { QrScanner } from "@/components/create/qr-scanner";
@@ -14,86 +15,6 @@ type CreateViewProps = {
 };
 
 type Step = "payee" | "scan" | "confirm" | "amount";
-
-function DummyQrMark({ className }: { className?: string }) {
-  const modules = [
-    [8, 0],
-    [10, 0],
-    [8, 2],
-    [11, 2],
-    [8, 4],
-    [10, 4],
-    [9, 8],
-    [11, 8],
-    [13, 8],
-    [16, 8],
-    [18, 8],
-    [20, 8],
-    [0, 8],
-    [2, 8],
-    [4, 8],
-    [9, 10],
-    [12, 10],
-    [15, 10],
-    [17, 10],
-    [19, 10],
-    [8, 12],
-    [10, 12],
-    [13, 12],
-    [16, 12],
-    [18, 12],
-    [20, 12],
-    [8, 14],
-    [11, 14],
-    [14, 14],
-    [17, 14],
-    [19, 14],
-    [8, 16],
-    [10, 16],
-    [13, 16],
-    [15, 16],
-    [18, 16],
-    [20, 16],
-    [8, 18],
-    [11, 18],
-    [14, 18],
-    [16, 18],
-    [19, 18],
-    [8, 20],
-    [10, 20],
-    [13, 20],
-    [15, 20],
-    [17, 20],
-    [20, 20],
-  ];
-
-  return (
-    <svg
-      viewBox="0 0 21 21"
-      fill="currentColor"
-      aria-hidden
-      className={className}
-      shapeRendering="crispEdges"
-    >
-      <Finder x={0} y={0} />
-      <Finder x={14} y={0} />
-      <Finder x={0} y={14} />
-      {modules.map(([x, y]) => (
-        <rect key={`${x}-${y}`} x={x} y={y} width={1} height={1} />
-      ))}
-    </svg>
-  );
-}
-
-function Finder({ x, y }: { x: number; y: number }) {
-  return (
-    <g>
-      <rect x={x} y={y} width={7} height={7} />
-      <rect x={x + 1} y={y + 1} width={5} height={5} className="fill-ink" />
-      <rect x={x + 2} y={y + 2} width={3} height={3} />
-    </g>
-  );
-}
 
 export function CreateView({ defaultName = "", onCreate }: CreateViewProps) {
   const [step, setStep] = useState<Step>("payee");
@@ -175,8 +96,14 @@ export function CreateView({ defaultName = "", onCreate }: CreateViewProps) {
                   Camera or a photo of their code
                 </span>
               </span>
-              <span className="grid size-12 place-items-center border border-slip/40 p-1.5">
-                <DummyQrMark className="size-full text-slip" />
+              <span className="grid size-12 place-items-center overflow-hidden border border-slip/40 bg-white p-1.5">
+                <Image
+                  src="/QR_Code_Example.svg"
+                  alt="Example UPI QR code"
+                  width={36}
+                  height={36}
+                  className="size-full object-contain"
+                />
               </span>
             </button>
             <div className="flex flex-col gap-6">
