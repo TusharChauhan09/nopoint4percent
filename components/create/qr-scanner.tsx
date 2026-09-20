@@ -10,7 +10,7 @@ type QrScannerProps = {
 };
 
 type Detector = {
-  detect: (source: CanvasImageSource) => Promise<Array<{ rawValue?: string }>>;
+  detect: (source: ImageBitmapSource) => Promise<Array<{ rawValue?: string }>>;
 };
 
 function getBarcodeDetector(): Detector | null {
@@ -27,194 +27,214 @@ function getBarcodeDetector(): Detector | null {
   }
 }
 
-function readFromCanvas(canvas: HTMLCanvasElement): string | null {
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  if (!ctx) return null;
-  const { width, height } = canvas;
-  if (!width || !height) return null;
+function decodeImageData(image: ImageData): string | null {
   try {
-    const image = ctx.getImageData(0, 0, width, height);
     return (
-      jsQR(image.data, width, height, { inversionAttempts: "attemptBoth" })
-        ?.data ?? null
+      jsQR(image.data, image.width, image.height, {
+        inversionAttempts: "attemptBoth",
+      })?.data ?? null
     );
   } catch {
     return null;
   }
 }
 
+function drawAndDecode(
+  source: CanvasImageSource,
+  sw: number,
+  sh: number,
+  canvas: HTMLCanvasElement,
+  maxDim: number,
+): string | null {
+  const scale = Math.min(1, maxDim / Math.max(sw, sh));
+  const w = Math.max(1, Math.round(sw * scale));
+  const h = Math.max(1, Math.round(sh * scale));
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return null;
+  ctx.drawImage(source, 0, 0, w, h);
+  return decodeImageData(ctx.getImageData(0, 0, w, h));
+}
+
+function decodeSource(
+  source: CanvasImageSource,
+  sw: number,
+  sh: number,
+  canvas: HTMLCanvasElement,
+): string | null {
+  for (const maxDim of [sw > 1600 ? 1600 : sw, 1000, 720, 480]) {
+    const payload = drawAndDecode(source, sw, sh, canvas, maxDim);
+    if (payload) return payload;
+  }
+
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return null;
+  const crop = 0.62;
+  const cw = Math.max(1, Math.round(sw * crop));
+  const ch = Math.max(1, Math.round(sh * crop));
+  const sx = Math.round((sw - cw) / 2);
+  const sy = Math.round((sh - ch) / 2);
+  const out = 720;
+  const scale = Math.min(1, out / Math.max(cw, ch));
+  const w = Math.max(1, Math.round(cw * scale));
+  const h = Math.max(1, Math.round(ch * scale));
+  canvas.width = w;
+  canvas.height = h;
+  ctx.drawImage(source, sx, sy, cw, ch, 0, 0, w, h);
+  return decodeImageData(ctx.getImageData(0, 0, w, h));
+}
+
 export function QrScanner({ onDetect, onClose }: QrScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const galleryRef = useRef<HTMLInputElement>(null);
   const onDetectRef = useRef(onDetect);
   const lastRejected = useRef("");
   const [cameraError, setCameraError] = useState("");
   const [hint, setHint] = useState("Hold a UPI QR inside the frame");
+  const [busy, setBusy] = useState(false);
   onDetectRef.current = onDetect;
 
   useEffect(() => {
     let stream: MediaStream | null = null;
-    let timer = 0;
+    let raf = 0;
     let cancelled = false;
     let scanning = false;
     const detector = getBarcodeDetector();
 
-    function schedule(delay: number) {
-      window.clearTimeout(timer);
-      if (!cancelled) {
-        timer = window.setTimeout(() => {
-          void scan();
-        }, delay);
-      }
-    }
-
     async function start() {
-      // Camera requires secure context; show helpful message otherwise.
-      if (
-        typeof navigator === "undefined" ||
-        !navigator.mediaDevices?.getUserMedia
-      ) {
-        setCameraError("Camera needs HTTPS or localhost. Use a photo of the QR.");
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setCameraError("Camera needs HTTPS. Choose a photo from gallery.");
         return;
       }
       try {
         stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: "environment" } },
+          video: {
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
           audio: false,
         });
         if (cancelled) {
           stream.getTracks().forEach((track) => track.stop());
           return;
         }
-        const liveVideo = videoRef.current;
-        if (!liveVideo) return;
-        liveVideo.srcObject = stream;
-        try {
-          await liveVideo.play();
-        } catch {
-          // Autoplay can reject; user can tap video to resume.
-        }
-        schedule(150);
+        const video = videoRef.current;
+        if (!video) return;
+        video.srcObject = stream;
+        await video.play().catch(() => {});
+        loop();
       } catch {
         if (!cancelled) {
-          setCameraError("Camera is blocked or missing. Use a photo of the QR.");
+          setCameraError("Camera is blocked. Choose a photo from gallery.");
         }
       }
     }
 
-    async function scan() {
-      if (cancelled || scanning) return;
+    async function loop() {
+      if (cancelled) return;
       const video = videoRef.current;
-      if (!video || video.readyState < 2 || !video.videoWidth) {
-        schedule(250);
-        return;
-      }
-
-      scanning = true;
-      try {
-        let payload: string | null = null;
-        if (detector) {
-          try {
-            const codes = await detector.detect(video);
-            payload = codes.find((code) => code.rawValue)?.rawValue ?? null;
-          } catch {
-            payload = null;
-          }
-        }
-
-        if (!payload) {
-          const canvas = canvasRef.current;
-          if (canvas) {
-            // Downscale full-HD frames so jsQR runs fast enough for auto-detect.
-            const vw = video.videoWidth;
-            const vh = video.videoHeight;
-            const maxDim = 640;
-            const scale = Math.min(1, maxDim / Math.max(vw, vh));
-            const w = Math.max(1, Math.round(vw * scale));
-            const h = Math.max(1, Math.round(vh * scale));
-            if (canvas.width !== w) canvas.width = w;
-            if (canvas.height !== h) canvas.height = h;
-            const ctx = canvas.getContext("2d", { willReadFrequently: true });
-            if (ctx) {
-              ctx.drawImage(video, 0, 0, w, h);
-              payload = readFromCanvas(canvas);
+      const canvas = canvasRef.current;
+      if (
+        !scanning &&
+        video &&
+        canvas &&
+        video.readyState >= 2 &&
+        video.videoWidth
+      ) {
+        scanning = true;
+        try {
+          let payload: string | null = null;
+          if (detector) {
+            try {
+              const codes = await detector.detect(video);
+              payload = codes.find((code) => code.rawValue)?.rawValue ?? null;
+            } catch {
+              payload = null;
             }
           }
+          if (!payload) {
+            payload = drawAndDecode(
+              video,
+              video.videoWidth,
+              video.videoHeight,
+              canvas,
+              800,
+            );
+          }
+          if (payload && payload !== lastRejected.current) {
+            if (onDetectRef.current(payload)) return;
+            lastRejected.current = payload;
+            setHint("That QR is not a UPI payment code.");
+          }
+        } finally {
+          scanning = false;
         }
-
-        if (payload && payload !== lastRejected.current) {
-          if (onDetectRef.current(payload)) return;
-          lastRejected.current = payload;
-          setHint("That QR is not a UPI payment code.");
-        }
-      } finally {
-        scanning = false;
       }
-
-      schedule(120);
+      raf = window.requestAnimationFrame(() => {
+        void loop();
+      });
     }
 
     void start();
 
     return () => {
       cancelled = true;
-      window.clearTimeout(timer);
+      window.cancelAnimationFrame(raf);
       stream?.getTracks().forEach((track) => track.stop());
-      const v = videoRef.current;
-      if (v) {
-        try {
-          v.pause();
-        } catch {
-          // ignore
-        }
-        v.srcObject = null;
+      const video = videoRef.current;
+      if (video) {
+        video.pause();
+        video.srcObject = null;
       }
     };
   }, []);
 
-  function readFile(file: File) {
-    const image = new Image();
-    const url = URL.createObjectURL(file);
-    image.onload = () => {
-      try {
-        const canvas = canvasRef.current;
-        if (!canvas || !image.naturalWidth || !image.naturalHeight) {
-          setHint("Could not open that photo.");
-          return;
-        }
-        // Downscale huge photos so jsQR can detect reliably.
-        const maxDim = 1280;
-        const scale = Math.min(
-          1,
-          maxDim / Math.max(image.naturalWidth, image.naturalHeight),
-        );
-        const w = Math.max(1, Math.round(image.naturalWidth * scale));
-        const h = Math.max(1, Math.round(image.naturalHeight * scale));
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext("2d", { willReadFrequently: true });
-        if (!ctx) {
-          setHint("Could not open that photo.");
-          return;
-        }
-        ctx.drawImage(image, 0, 0, w, h);
-        const payload = readFromCanvas(canvas);
-        if (payload && onDetectRef.current(payload)) return;
-        setHint(
-          payload
-            ? "That QR is not a UPI payment code."
-            : "No UPI QR in that photo. Try a sharper shot.",
-        );
-      } finally {
-        URL.revokeObjectURL(url);
+  async function readFile(file: File) {
+    setBusy(true);
+    setHint("Reading QR…");
+    try {
+      const canvas = canvasRef.current;
+      if (!canvas) {
+        setHint("Could not open that photo.");
+        return;
       }
-    };
-    image.onerror = () => {
-      URL.revokeObjectURL(url);
+
+      let bitmap: ImageBitmap | null = null;
+      try {
+        bitmap = await createImageBitmap(file, {
+          imageOrientation: "from-image",
+        } as ImageBitmapOptions);
+      } catch {
+        bitmap = await createImageBitmap(file);
+      }
+
+      let payload =
+        (getBarcodeDetector()
+          ? (await getBarcodeDetector()!
+              .detect(bitmap)
+              .catch(() => []))
+              .find((code) => code.rawValue)?.rawValue
+          : null) ?? null;
+
+      if (!payload) {
+        payload = decodeSource(bitmap, bitmap.width, bitmap.height, canvas);
+      }
+      bitmap.close();
+
+      if (payload && onDetectRef.current(payload)) return;
+      setHint(
+        payload
+          ? "That QR is not a UPI payment code."
+          : "No UPI QR in that photo. Try a closer shot.",
+      );
+    } catch {
       setHint("Could not open that photo.");
-    };
-    image.src = url;
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -237,16 +257,19 @@ export function QrScanner({ onDetect, onClose }: QrScannerProps) {
           {cameraError || hint}
         </p>
       </div>
-      <canvas ref={canvasRef} className="hidden" />
+      <canvas
+        ref={canvasRef}
+        className="pointer-events-none fixed top-0 left-0 size-px opacity-0"
+        aria-hidden
+      />
       <input
-        ref={fileRef}
+        ref={galleryRef}
         type="file"
         accept="image/*"
-        capture="environment"
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];
-          if (file) readFile(file);
+          if (file) void readFile(file);
           e.target.value = "";
         }}
       />
@@ -254,9 +277,10 @@ export function QrScanner({ onDetect, onClose }: QrScannerProps) {
         <Button
           type="button"
           className="h-12 rounded-sm px-6 text-base"
-          onClick={() => fileRef.current?.click()}
+          disabled={busy}
+          onClick={() => galleryRef.current?.click()}
         >
-          Use a photo
+          Choose from gallery
         </Button>
         <Button
           type="button"

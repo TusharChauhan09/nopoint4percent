@@ -31,15 +31,18 @@ export function parseUpiQr(raw: string): ParsedUpiQr | null {
   if (isValidUpiId(text)) return { upiId: text.trim() };
 
   const search = queryFromPayload(text);
-  const upiId = param(search, "pa");
-  if (!upiId || !isValidUpiId(upiId)) return null;
+  const upiId = param(search, "pa")?.replace(/\s+/g, "");
+  const fromPa = upiId && isValidUpiId(upiId) ? upiId.trim() : null;
+  const fallback = text.match(/[a-zA-Z0-9._-]{2,256}@[a-zA-Z0-9]{2,64}/)?.[0];
+  const resolved = fromPa || (fallback && isValidUpiId(fallback) ? fallback : null);
+  if (!resolved) return null;
 
   const name = param(search, "pn");
   const amountRaw = param(search, "am");
   const amount = amountRaw ? parseAmount(amountRaw) : null;
 
   return {
-    upiId: upiId.trim(),
+    upiId: resolved,
     ...(name ? { name } : {}),
     ...(amount != null ? { amount } : {}),
   };

@@ -1,6 +1,8 @@
 export const CHUNK_RUPEES = 1900;
+export const FEE_FROM_RUPEES = 2000;
+export const AVOIDED_FEE_RATE = 0.004;
 
-export const UPI_REGEX = /^[a-zA-Z0-9._-]{2,256}@[a-zA-Z]{2,64}$/;
+export const UPI_REGEX = /^[a-zA-Z0-9._-]{2,256}@[a-zA-Z0-9]{2,64}$/;
 
 export function isValidUpiId(id: string): boolean {
   return UPI_REGEX.test(id.trim());
@@ -25,6 +27,19 @@ export function formatDisplayAmount(n: number): string {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   });
+}
+
+export function avoidedFee(total: number): number {
+  if (!Number.isFinite(total) || total < FEE_FROM_RUPEES) return 0;
+  return Math.round(total * AVOIDED_FEE_RATE * 100) / 100;
+}
+
+export function totalAvoidedFee(totals: number[]): number {
+  const paise = totals.reduce(
+    (sum, total) => sum + Math.round(avoidedFee(total) * 100),
+    0,
+  );
+  return paise / 100;
 }
 
 export function splitAmount(

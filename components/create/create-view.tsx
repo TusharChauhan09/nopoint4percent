@@ -23,9 +23,10 @@ export function CreateView({ defaultName = "", onCreate }: CreateViewProps) {
   const [amount, setAmount] = useState("");
   const [error, setError] = useState("");
 
-  function applyPayee(nextUpi: string, nextName?: string) {
+  function applyPayee(nextUpi: string, nextName?: string, nextAmount?: number) {
     setUpiId(nextUpi);
     if (nextName) setName(nextName);
+    setAmount(nextAmount != null ? String(nextAmount) : "");
     setError("");
     setStep("confirm");
   }
@@ -41,8 +42,7 @@ export function CreateView({ defaultName = "", onCreate }: CreateViewProps) {
   function handleScan(payload: string) {
     const parsed = parseUpiQr(payload);
     if (!parsed) return false;
-    if (parsed.amount != null) setAmount(String(parsed.amount));
-    applyPayee(parsed.upiId, parsed.name);
+    applyPayee(parsed.upiId, parsed.name, parsed.amount);
     return true;
   }
 
@@ -130,7 +130,10 @@ export function CreateView({ defaultName = "", onCreate }: CreateViewProps) {
               setError("");
               setStep("amount");
             }}
-            onChangePayee={() => setStep("payee")}
+            onChangePayee={() => {
+              setAmount("");
+              setStep("payee");
+            }}
           />
         ) : null}
         {step === "amount" ? (

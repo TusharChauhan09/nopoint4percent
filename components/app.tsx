@@ -15,6 +15,7 @@ import {
   upsertSplit,
   type SplitRecord,
 } from "@/lib/history";
+import { totalAvoidedFee } from "@/lib/split";
 
 type View = "create" | "history" | "tiles";
 
@@ -34,6 +35,7 @@ export function App() {
   }, []);
 
   const active = splits.find((row) => row.id === activeId) ?? null;
+  const saved = totalAvoidedFee(splits.map((row) => row.total));
 
   function handleCreate(input: {
     upiId: string;
@@ -64,6 +66,7 @@ export function App() {
   return (
     <PageCanvas>
       <SiteHeader
+        saved={saved}
         showPast={view !== "history" && splits.length > 0}
         showNew={view !== "create"}
         onPast={() => setView("history")}

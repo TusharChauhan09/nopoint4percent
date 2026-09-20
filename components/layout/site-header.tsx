@@ -2,8 +2,10 @@
 
 import { GithubStar } from "@/components/layout/github-star";
 import { Button } from "@/components/ui/button";
+import { formatDisplayAmount } from "@/lib/split";
 
 type SiteHeaderProps = {
+  saved: number;
   onPast?: () => void;
   onNew?: () => void;
   showPast?: boolean;
@@ -11,16 +13,22 @@ type SiteHeaderProps = {
 };
 
 export function SiteHeader({
+  saved,
   onPast,
   onNew,
   showPast,
   showNew,
 }: SiteHeaderProps) {
   return (
-    <header className="mb-12 flex items-center justify-between gap-4">
-      <p className="text-[1.35rem] font-extrabold tracking-tight">
-        nopoint4percent
-      </p>
+    <header className="mb-12 flex items-start justify-between gap-4">
+      <div>
+        <p className="text-[1.35rem] font-extrabold tracking-tight">
+          nopoint4percent
+        </p>
+        <p className="mt-1 text-sm tabular-nums text-paid">
+          ₹{formatDisplayAmount(saved)} saved
+        </p>
+      </div>
       <nav className="flex items-center gap-3 text-[0.95rem] sm:gap-4">
         {showPast ? (
           <button

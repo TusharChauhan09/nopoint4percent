@@ -1,14 +1,20 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { QRCodeSVG } from "qrcode.react";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { buildUpiUri, formatDisplayAmount } from "@/lib/split";
 import { cn } from "@/lib/utils";
 
-function isMobileUpiDevice() {
-  if (typeof navigator === "undefined") return false;
-  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+function launchUpiApp(uri: string) {
+  const android = /Android/i.test(navigator.userAgent);
+  if (android) {
+    const path = uri.replace(/^upi:\/\//i, "");
+    window.location.assign(`intent://${path}#Intent;scheme=upi;end`);
+    return;
+  }
+  window.location.assign(uri);
 }
 
 type PayCouponProps = {
@@ -30,22 +36,10 @@ export function PayCoupon({
   checked,
   onCheckedChange,
 }: PayCouponProps) {
-  const [copied, setCopied] = useState(false);
   const uri = useMemo(
     () => buildUpiUri({ upiId, name, amount }),
     [upiId, name, amount],
   );
-  const mobile = isMobileUpiDevice();
-
-  async function copyLink() {
-    try {
-      await navigator.clipboard.writeText(uri);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1600);
-    } catch {
-      setCopied(false);
-    }
-  }
 
   return (
     <article
@@ -72,22 +66,14 @@ export function PayCoupon({
         <p className="text-3xl font-extrabold tabular-nums sm:text-4xl">
           ₹{formatDisplayAmount(amount)}
         </p>
-        {mobile ? (
-          <a
-            href={uri}
-            className="mt-2 inline-block text-rupee underline-offset-4 hover:underline"
-          >
-            Open UPI
-          </a>
-        ) : (
-          <button
-            type="button"
-            onClick={copyLink}
-            className="mt-2 text-rupee underline-offset-4 hover:underline"
-          >
-            {copied ? "Copied" : "Copy pay link"}
-          </button>
-        )}
+        <Button
+          type="button"
+          size="sm"
+          className="mt-3"
+          onClick={() => launchUpiApp(uri)}
+        >
+          Pay ₹{formatDisplayAmount(amount)}
+        </Button>
       </div>
       <label className="flex cursor-pointer items-center gap-2 text-sm">
         <Checkbox
