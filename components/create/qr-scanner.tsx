@@ -64,8 +64,10 @@ export function QrScanner({ onDetect, onClose }: QrScannerProps) {
           stream.getTracks().forEach((track) => track.stop());
           return;
         }
-        video.srcObject = stream;
-        await video.play();
+        const liveVideo = videoRef.current ?? video;
+        if (!liveVideo) return;
+        liveVideo.srcObject = stream;
+        await liveVideo.play();
         scan();
       } catch {
         if (!cancelled) {
