@@ -8,8 +8,29 @@ const bricolage = Bricolage_Grotesque({
 });
 
 export const metadata: Metadata = {
-  title: "nopoint4percent",
-  description: "Split a UPI amount into scan-ready QRs under ₹1900.",
+  title: "nopoint4percent — Split UPI into ₹1,900 QR slips",
+  description:
+    "Scan a UPI QR, confirm the payee, then split the amount into scan-ready payment slips under ₹1,900.",
+  applicationName: "nopoint4percent",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
+  openGraph: {
+    title: "nopoint4percent — Split UPI into ₹1,900 QR slips",
+    description:
+      "Scan a UPI QR, confirm the payee, then split the amount into scan-ready payment slips under ₹1,900.",
+    siteName: "nopoint4percent",
+    type: "website",
+    images: ["/logo.png"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "nopoint4percent — Split UPI into ₹1,900 QR slips",
+    description:
+      "Scan a UPI QR, confirm the payee, then split the amount into scan-ready payment slips under ₹1,900.",
+    images: ["/logo.png"],
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

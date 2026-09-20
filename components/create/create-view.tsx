@@ -16,39 +16,82 @@ type CreateViewProps = {
 type Step = "payee" | "scan" | "confirm" | "amount";
 
 function DummyQrMark({ className }: { className?: string }) {
+  const modules = [
+    [8, 0],
+    [10, 0],
+    [8, 2],
+    [11, 2],
+    [8, 4],
+    [10, 4],
+    [9, 8],
+    [11, 8],
+    [13, 8],
+    [16, 8],
+    [18, 8],
+    [20, 8],
+    [0, 8],
+    [2, 8],
+    [4, 8],
+    [9, 10],
+    [12, 10],
+    [15, 10],
+    [17, 10],
+    [19, 10],
+    [8, 12],
+    [10, 12],
+    [13, 12],
+    [16, 12],
+    [18, 12],
+    [20, 12],
+    [8, 14],
+    [11, 14],
+    [14, 14],
+    [17, 14],
+    [19, 14],
+    [8, 16],
+    [10, 16],
+    [13, 16],
+    [15, 16],
+    [18, 16],
+    [20, 16],
+    [8, 18],
+    [11, 18],
+    [14, 18],
+    [16, 18],
+    [19, 18],
+    [8, 20],
+    [10, 20],
+    [13, 20],
+    [15, 20],
+    [17, 20],
+    [20, 20],
+  ];
+
   return (
     <svg
       viewBox="0 0 21 21"
       fill="currentColor"
       aria-hidden
       className={className}
+      shapeRendering="crispEdges"
     >
-      <rect x="1" y="1" width="7" height="7" />
-      <rect x="2.4" y="2.4" width="4.2" height="4.2" className="fill-ink" />
-      <rect x="3.5" y="3.5" width="2" height="2" />
-      <rect x="13" y="1" width="7" height="7" />
-      <rect x="14.4" y="2.4" width="4.2" height="4.2" className="fill-ink" />
-      <rect x="15.5" y="3.5" width="2" height="2" />
-      <rect x="1" y="13" width="7" height="7" />
-      <rect x="2.4" y="14.4" width="4.2" height="4.2" className="fill-ink" />
-      <rect x="3.5" y="15.5" width="2" height="2" />
-      <rect x="10" y="1" width="1.6" height="1.6" />
-      <rect x="10" y="4.4" width="1.6" height="1.6" />
-      <rect x="10" y="7.8" width="1.6" height="3.2" />
-      <rect x="1" y="10" width="3.2" height="1.6" />
-      <rect x="5.8" y="10" width="1.6" height="1.6" />
-      <rect x="9.2" y="10" width="4.8" height="1.6" />
-      <rect x="15.8" y="10" width="1.6" height="1.6" />
-      <rect x="18.6" y="10" width="1.4" height="3.2" />
-      <rect x="10" y="13" width="1.6" height="1.6" />
-      <rect x="13.4" y="13" width="3.2" height="1.6" />
-      <rect x="18.6" y="14.6" width="1.4" height="1.6" />
-      <rect x="10" y="16.2" width="3.2" height="1.6" />
-      <rect x="14.8" y="16.2" width="1.6" height="1.6" />
-      <rect x="18.6" y="17.8" width="1.4" height="2.2" />
-      <rect x="10" y="19.4" width="1.6" height="1.6" />
-      <rect x="13.4" y="19.4" width="3.2" height="1.6" />
+      <Finder x={0} y={0} />
+      <Finder x={14} y={0} />
+      <Finder x={0} y={14} />
+      {modules.map(([x, y]) => (
+        <rect key={`${x}-${y}`} x={x} y={y} width={1} height={1} />
+      ))}
     </svg>
+  );
+}
+
+function Finder({ x, y }: { x: number; y: number }) {
+  return (
+    <g>
+      <rect x={x} y={y} width={7} height={7} />
+      <rect x={x + 1} y={y + 1} width={5} height={5} className="fill-ink" />
+      <rect x={x + 2} y={y + 2} width={3} height={3} />
+    </g>
   );
 }
 
